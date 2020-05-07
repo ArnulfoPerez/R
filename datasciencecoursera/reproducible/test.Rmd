@@ -1,0 +1,120 @@
+---
+title: "Yearly patterns of hurricanes and floods in the US from 1950 to 2011"
+author: "Arnulfo Perez"
+date: "April 8, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(plyr)
+library(lubridate)
+```
+
+## Synopsis
+
+This report analyzes data from the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. According to the data hurricanes and floods are the more severe kind of events in terms of property and crop damage. A worrisome observation is that the frequency of floods steadily increases year by year.
+
+
+## Introduction
+
+Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. Many severe events can result in fatalities, injuries, and property damage, and preventing such outcomes to the extent possible is a key concern.
+
+This project involves exploring the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database tracks characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage.
+
+## Data Processing
+
+The data for this assignment come in the form of a comma-separated-value file compressed via the bzip2 algorithm to reduce its size. 
+
+The events in the database start in the year 1950 and end in November 2011. In the earlier years of the database there are generally fewer events recorded, most likely due to a lack of good records. More recent years should be considered more complete.
+
+```{r download}
+
+fileURL = "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+destinationFile ="./Data/StormData.csv.bz2"
+
+if (!file.exists("data")) {dir.create("data")}
+
+download.file(fileURL, destfile = destinationFile , method = "auto")
+dateDownloaded <- date()
+
+data <- read.csv(destinationFile)
+str(data)
+
+names(data)
+```
+
+Data was downloaded on `r dateDownloaded`.
+
+### Preprocessing
+
+Use the BGN_DATE field as the marker of the date of the events.
+
+```{r}
+data$begindate <-  as.Date(data$BGN_DATE, format = "%m/%d/%Y %H:%M:%S")
+```
+
+Calculate property damage by type of event.
+
+```{r}
+Property_Damage <- ddply(data, .(EVTYPE, PROPDMGEXP), summarize, PROPDMG = sum(PROPDMG))
+Property_Damage <- mutate(Property_Damage, PropertyDamage = ifelse(toupper(PROPDMGEXP) =='K', PROPDMG*1000, ifelse(toupper(PROPDMGEXP) =='M', PROPDMG*1000000, ifelse(toupper(PROPDMGEXP) == 'B', PROPDMG*1000000000, ifelse(toupper(PROPDMGEXP) == 'H', PROPDMG*100, PROPDMG)))))
+Property_Damage <- subset(Property_Damage, select = c("EVTYPE", "PropertyDamage"))
+Property_Damage_total <- ddply(Property_Damage, .(EVTYPE), summarize, TotalPropDamage = sum(PropertyDamage))
+
+Crop_Damage <- ddply(data, .(EVTYPE, CROPDMGEXP), summarize, CROPDMG = sum(CROPDMG))
+
+Crop_Damage <- mutate(Crop_Damage, CropDamage = ifelse(toupper(CROPDMGEXP) =='K', CROPDMG*1000, ifelse(toupper(CROPDMGEXP) =='M', CROPDMG*1000000, ifelse(toupper(CROPDMGEXP) == 'B', CROPDMG*1000000000, ifelse(toupper(CROPDMGEXP) == 'H', CROPDMG*100, CROPDMG)))))
+
+Crop_Damage <- subset(Crop_Damage, select = c("EVTYPE", "CropDamage"))
+
+Crop_Damage_total <- ddply(Crop_Damage, .(EVTYPE), summarize, TotalCropDamage = sum(CropDamage))
+
+#Merge the property and crop damage
+
+Damage <- merge(Property_Damage_total, Crop_Damage_total, by="EVTYPE")
+
+Damage <- mutate(Damage, TotalDamage = TotalPropDamage + TotalCropDamage)
+
+Damage <- Damage[order(Damage$TotalDamage, decreasing = T), ]
+```
+
+## Types of events
+
+```{r}
+Damage[1:10, ]
+```
+
+Floods and hurricanes are the most severe events in terms of damage.
+
+```{r hurricanes}
+hurricane =data[which((data$EVTYPE=="HURRICANE/TYPHOON")|(data$EVTYPE=="HURRICANE")),]
+flood =data[which((data$EVTYPE=="FLOOD")|(data$EVTYPE=="FLASH FLOOD")|(data$EVTYPE=="RIVER FLOOD")),]
+```
+
+The number of hurricanes registered between 1950 and 2011 were `r nrow(hurricane)`.
+The number of floods registered between 1950 and 2011 were `r nrow(flood)`.
+
+## Histograms
+
+Frecuency of severe weather events
+
+```{r events, echo=FALSE}
+hist(year(data$begindate),main = "Frecuency of severe weather events by year")
+hist(month(data$begindate),main = "Frecuency of severe weather events by month")
+hist(year(hurricane$begindate),main = "Frecuency of hurricanes by year")
+hist(month(hurricane$begindate),main = "Frecuency of hurricanes by month")
+hist(year(flood$begindate),main = "Frecuency of floods by year")
+hist(month(flood$begindate),main = "Frecuency of floods by month")
+
+```
+
+**Floods seem to be increasing year by year.**
+
+## Results 
+
+There is a clear seasonal pattern for floods and hurricanes. Floods are distributed on a normal distribution that peaks on the month of May, and hurricanes are mostly present between June and November with a peak on September.
+
+According to the data hurricanes and floods are the more severe kind of events in terms of property and crop damage. A worrisome observation is that the frequency of floods steadily increases year by year.
+
