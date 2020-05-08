@@ -19,3 +19,5 @@ myPlot <- function(β){
   g
 }
 manipulate(myPlot(beta), beta = slider(0.6,1.2,step = 0.02))
+
+
