@@ -1,0 +1,93 @@
+---
+title: "Regression Models Course Project"
+author: "Armulfo Perez"
+date: "12/5/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+data("mtcars")
+```
+
+## Executive summary
+
+We are interested in exploring the relationship between a set of variables and miles per gallon (MPG) (outcome). They are particularly interested in the following two questions:
+
+ - “Is an automatic or manual transmission better for MPG”
+ - "Quantify the MPG difference between automatic and manual transmissions." 
+
+Based on the mcars dataset, the most important factor for mileage is the weight of the vehicle. Manual transmission is more efficient for light vehicles, but it gets less important as vehicles become heavier. Manual transmission is more efficient than automatic for lighter cars (as much as 30%), but as car become heavier, the difference reverses.
+ 
+ 
+## Data
+
+The mtcars data set consists of 32 observations of  11 variables, including miles per gallon performance, and whether a car has automatic or manual transmission.
+ 
+```{r cars}
+str(mtcars)
+```
+
+## Basic Analysis
+
+Let´s start by determining the relative importance of the transmission type on millages performance by fitting a linear model to the data.
+```{r}
+lmall <- lm(mpg ~ ., data = mtcars)
+lmall
+```
+
+The model shows that the most important factor determining millages is the weight of the vehicle, followed by transmission type, with a coefficient of 2.5.
+
+
+```{r residuals, echo=TRUE}
+par(mfrow = c(2, 2))
+plot(lmall)
+dev.off()
+```
+
+The residuals plots show that the normalcy condition is meet and that there are points with high leverage.
+
+## Weight and transmission type
+
+Let's consider the relation between millage and vehicle weight under the two types of transmission.
+
+```{r}
+mcars <- mtcars[mtcars$am==1,]
+acars <- mtcars[mtcars$am==0,]
+summary(mcars)[,c(1,6)]
+summary(acars)[,c(1,6)]
+lmt <- lm(mpg ~ wt, data = mtcars)
+lma <- lm(mpg ~ wt, data = acars)
+lmm <- lm(mpg ~ wt, data = mcars)
+plot(mtcars$wt,mtcars$mpg,col=mtcars$am+1)
+legend('topright', legend = levels(factor(mtcars$am)), col = 1:2, cex = 0.8, pch = 1)
+abline(lmt,col="black",lw=2)
+abline(lmm,col="red",lw=2)
+abline(lma,col="blue",lw=2)
+```
+
+The plot shows the automatic transmission cars as black dots, and manual transmission one's as red. Three linear models are fitted (black: all cars, blue: automatic, red: manual). To more clearly see the effect of manual transmission, let's eliminate extreme cases, those weighting more than 5 tons and with better mileage than 31 mpg.
+
+```{r}
+ncars <- mtcars[mtcars$mpg < 31 & mtcars$wt<5,]
+mncars <- ncars[ncars$am==1,]
+ancars <- ncars[mtcars$am==0,]
+lmn <- lm(mpg ~ wt, data = ncars)
+lmn
+predict.lm(lmn, interval="confidence")
+lmna <- lm(mpg ~ wt, data = ancars)
+lmnm <- lm(mpg ~ wt, data = mncars)
+plot(ncars$wt,ncars$mpg,col=ncars$am+1)
+legend('topright', legend = levels(factor(mtcars$am)), col = 1:2, cex = 0.8, pch = 1)
+abline(lmn,lw=2)
+abline(lmnm,col="red",lw=2)
+abline(lmna,col="blue",lw=2)
+```
+
+It is evident from the plot that manual transmission is more efficient than automatic for lighter cars (as much as 30%), but as car become heavier, the difference reverses. According to the prediction confidence interval estimates of the model the predicted milages is estimated roughly with +/- 2 mpg.
+
+## Conclusions.
+
+The most important factor for mileage is the weight of the vehicle. Manual transmission is more efficient for light vehicles but it gets less important as vehicles become heavier. According to the prediction confidence interval estimates of the model the predicted milages is estimated roughly with +/- 2 mpg.
