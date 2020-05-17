@@ -1,23 +1,37 @@
+library(lattice)
+library(ggplot2)
 library(caret)
 library(dplyr)
+library(rpart)
+library(rpart.plot)
+library(rattle)
+library(randomForest)
+library(corrplot)
+library(gbm)
 
-trainUrl <-"https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
-
-testUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
-
-trainFile <- "./data/pml-training.csv"
-
-testFile  <- "./data/pml-testing.csv"
-
-if (!file.exists(trainFile)) {
+if (!file.exists("./data")) {
   
-  download.file(trainUrl, destfile=trainFile, method="curl")
+  dir.create("./data")
   
 }
 
-if (!file.exists(testFile)) {
+training_Url <-"https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+
+testing_Url <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+
+training_csv <- "./data/pml-training.csv"
+
+testing_csv  <- "./data/pml-testing.csv"
+
+if (!file.exists(training_csv)) {
   
-  download.file(testUrl, destfile=testFile, method="curl")
+  download.file(training_Url, destfile=training_csv, method="curl")
+  
+}
+
+if (!file.exists(testing_csv)) {
+  
+  download.file(testing_Url, destfile=testing_csv, method="curl")
   
 }
 
@@ -28,7 +42,6 @@ str(training)
 names(training)
 
 pre <- function(rawData){
-  rawData$classe <- factor(rawData$classe)
   rawData$user_name <- factor(rawData$user_name)
   rawData$new_window <- factor(rawData$new_window)
   preProcessed <- preProcess(rawData,method = c("center","scale","corr","nzv","conditionalX"))
@@ -37,10 +50,19 @@ pre <- function(rawData){
   return( dplyr::select_if(x, function(col) is.numeric(col) | is.factor(col)))
 }
 
-trainData <- pre(training)
-testData <- pre(testing)
+training$classe <- factor(training$classe)
+data <- pre(training)
+inTraining <- createDataPartition(data$classe, p = 0.8, list = FALSE)
+trainData <- trainData[inTraining, ]
+testData <- trainData[-inTraining, ]
+dim(trainData)
+dim(testData)
+
+testing$problem_id <- factor(testing$problem_id)
+validationData <- pre(testing)
+
 head(trainData)
-head(testData)
+head(validationData)
 
 set.seed(12345)
 decisionTreeMod1 <- rpart(classe ~ ., data=trainData, method="class")
@@ -78,6 +100,6 @@ cmGBM <- confusionMatrix(predictGBM, testData$classe)
 cmGBM
 
 
-Results <- predict(modRF1, newdata=testData)
-Results
+Results <- predict(modRF1, newdata=validationData)
+table(validationData$problem_id,Results)
 
