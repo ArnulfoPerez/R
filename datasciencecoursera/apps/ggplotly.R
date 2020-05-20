@@ -11,4 +11,5 @@ p <- ggplot(data = d, aes(x = carat, y = price)) +
   facet_wrap(~ cut)
 
 (gg <- ggplotly(p))
+api_create(gg,sharing = "public")
   
