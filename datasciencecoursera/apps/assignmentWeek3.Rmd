@@ -1,0 +1,234 @@
+---
+title: 'Assignment: R Markdown Presentation & Plotly'
+author: "Armulfo Perez"
+date: "21/5/2020"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(plotly)
+library(tidyverse)
+library(maps)
+```
+
+## R Markdown
+
+This is an R Markdown presentation. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+Plotly examples from [Interactive web-based data visualization with R, plotly, and shiny by 
+Carson Sievert](https://plotly-r.com/index.html)
+
+## Basic chart
+
+```{r,fig.align='center', message = FALSE}
+library(plotly)
+fig <- plot_ly(midwest, x = ~percollege, color = ~state, type = "box")
+ggplotly(fig)
+```
+
+## A simple line graph
+
+```{r, fig.align='center', message = FALSE}
+library(plotly)
+
+df <- data.frame(x =  1:10, y = (1:10)^2)
+
+p <- ggplot(df, aes(x = x, y = y)) + geom_line() + labs(x = "X", y = "Y", title = "y = x^2")
+
+ggplotly(p)
+```
+
+## Mapbox
+
+```{r, message = FALSE,warning=FALSE}
+library(maps)
+library(plotly)
+plot_mapbox(maps::canada.cities) %>%
+  add_markers(
+    x = ~long, 
+    y = ~lat, 
+    size = ~pop, 
+    color = ~country.etc,
+    colors = "Accent",
+    text = ~paste(name, pop),
+    hoverinfo = "text"
+  )
+```
+
+## OpenStreetMap Tiles
+
+```{r fig.align='center', message = FALSE,warning=FALSE}
+library(plotly)
+
+us_cities = read.csv("https://raw.githubusercontent.com/plotly/datasets/master/us-cities-top-1k.csv")
+
+fig <- us_cities 
+fig <- fig %>%
+  plot_ly(
+    lat = ~lat,
+    lon = ~lon,
+    marker = list(color = "fuchsia"),
+    type = 'scattermapbox',
+    hovertext = us_cities[,"City"]) 
+fig <- fig %>%
+  layout(
+    mapbox = list(
+      style = 'open-street-map',
+      zoom =2.5,
+      center = list(lon = -88, lat = 34))) 
+
+fig
+```
+
+## Base Map Below A Trace
+
+```{r fig.align='center', message = FALSE,warning=FALSE}
+library(plotly)
+
+us_cities = read.csv("https://raw.githubusercontent.com/plotly/datasets/master/us-cities-top-1k.csv")
+
+fig <- us_cities 
+fig <- fig %>%
+  plot_ly(
+    lat = ~lat,
+    lon = ~lon,
+    type = "scattermapbox",
+    hovertext = us_cities[,"City"],
+    marker = list(color = "fuchsia")) 
+fig <- fig %>%
+  layout(mapbox= list(
+    style = "white-bg",
+    zoom = 3,
+    center = list(lon = -93 ,lat= 41),
+    layers = list(list(
+      below = 'traces',
+      sourcetype = "raster",
+      source = list("https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}")))))
+
+fig
+```
+
+
+## Mapbox
+
+```{r fig.align='center', message = FALSE,warning=FALSE}
+map_data("world", "canada") %>%
+   group_by(group) %>%
+   plot_mapbox(x = ~long, y = ~lat) %>%
+   add_polygons() %>%
+   layout(
+     mapbox = list(
+       center = list(lat = ~median(lat), lon = ~median(long))
+     )
+   )
+```
+
+## Mapbox with access token
+
+```{r fig.align='center', message = FALSE,warning=FALSE}
+us_cities = read.csv("https://raw.githubusercontent.com/plotly/datasets/master/us-cities-top-1k.csv")
+
+fig <- us_cities 
+fig <- fig %>%
+  plot_ly(
+    lat = ~lat,
+    lon = ~lon,
+    marker = list(color = "fuchsia"),
+    type = 'scattermapbox',
+    hovertext = us_cities[,"City"]) 
+fig <- fig %>%
+  layout(
+    mapbox = list(
+      style = 'dark',
+      zoom =2.5,
+      center = list(lon = -88, lat = 34))) 
+fig <- fig %>%
+  config(mapboxAccessToken = Sys.getenv("MAPBOX_TOKEN"))
+
+fig
+```
+
+
+## Histograms
+
+```{r fig.align='center', message = FALSE,warning=FALSE}
+p1 <- plot_ly(diamonds, x = ~price) %>%
+  add_histogram(name = "plotly.js")
+
+price_hist <- function(method = "FD") {
+  h <- hist(diamonds$price, breaks = method, plot = FALSE)
+  plot_ly(x = h$mids, y = h$counts) %>% add_bars(name = method)
+}
+
+subplot(
+  p1, price_hist(), price_hist("Sturges"),  price_hist("Scott"),
+  nrows = 4, shareX = TRUE
+)
+```
+
+
+## Multiple numeric distributions
+
+```{r fig.align='center', message = FALSE,warning=FALSE}
+one_plot <- function(d) {
+  plot_ly(d, x = ~price) %>%
+    add_annotations(
+      ~unique(clarity), x = 0.5, y = 1, 
+      xref = "paper", yref = "paper", showarrow = FALSE
+    )
+}
+
+diamonds %>%
+  split(.$clarity) %>%
+  lapply(one_plot) %>% 
+  subplot(nrows = 2, shareX = TRUE, titleX = FALSE) %>%
+  hide_legend()
+```
+
+
+## Boxplots
+
+```{r fig.align='center', message = FALSE,warning=FALSE}
+p <- plot_ly(diamonds, y = ~price, color = I("black"), 
+             alpha = 0.1, boxpoints = "suspectedoutliers")
+p1 <- p %>% add_boxplot(x = "Overall")
+p2 <- p %>% add_boxplot(x = ~cut)
+subplot(
+  p1, p2, shareY = TRUE,
+  widths = c(0.2, 0.8), margin = 0
+) %>% hide_legend()
+```
+
+## Trellis display
+
+```{r fig.align='center', message = FALSE,warning=FALSE}
+plot_ly(diamonds, x = ~price, y = ~interaction(clarity, cut)) %>%
+  add_boxplot(color = ~clarity) %>%
+  layout(yaxis = list(title = ""))
+```
+
+## 2D analog
+
+```{r fig.align='center', message = FALSE,warning=FALSE}
+p <- plot_ly(diamonds, x = ~log(carat), y = ~log(price))
+subplot(
+  add_histogram2d(p) %>%
+    colorbar(title = "default") %>%
+    layout(xaxis = list(title = "default")),
+  add_histogram2d(p, zsmooth = "best") %>%
+    colorbar(title = "zsmooth") %>%
+    layout(xaxis = list(title = "zsmooth")),
+  add_histogram2d(p, nbinsx = 60, nbinsy = 60) %>%
+    colorbar(title = "nbins") %>%
+    layout(xaxis = list(title = "nbins")),
+  shareY = TRUE, titleX = TRUE
+)
+```
+
+## 3D surface
+
+```{r fig.align='center', message = FALSE,warning=FALSE}
+x <- seq_len(nrow(volcano)) + 100
+y <- seq_len(ncol(volcano)) + 500
+plot_ly() %>% add_surface(x = ~x, y = ~y, z = ~volcano)

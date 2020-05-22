@@ -1,0 +1,44 @@
+---
+title: 'Peer-graded Assignment: R Markdown and Leaflet'
+author: "Armulfo Perez"
+date: "21/5/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown and Leaflet
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+You create a Leaflet map with these basic steps:
+
+1. Create a map widget by calling leaflet().
+2. Add layers (i.e., features) to the map by using layer functions (e.g. addTiles, addMarkers, addPolygons) to modify the map widget.
+3. Repeat step 2 as desired.
+4. Print the map widget to display it.
+
+Here’s a basic example from <https://rstudio.github.io/leaflet/>:
+
+```{r cars}
+library(leaflet)
+
+m <- leaflet() %>%
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  addMarkers(lng=174.768, lat=-36.852, popup="The birthplace of R")
+m  # Print the map
+```
+
+
+Here is the location of the Obispado Museum, in Monterrey, Mexico:
+
+```{r}
+
+m <- leaflet() %>%
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  addMarkers(lng=-100.349358, lat=25.67492, popup="Obispado")
+m  # Print the map
+
+```
