@@ -1,0 +1,82 @@
+---
+title: 'Probability and Statistics: To p or not to p? Week 5 Assignment Two: Hypothesis
+  Testing'
+author: "Armulfo Perez"
+date: "27/6/2020"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+You are to test the claim by a mineral water bottle manufacturer that its bottles contain an average of 1000 ml (1 litre). A random sample of n=12 bottles resulted in the measurements (in ml): 992, 1002, 1000, 1001, 998, 999, 1000, 995, 1003, 1001, 997 and 997.
+
+It is assumed that the true variance of water in all bottles is $\sigma^2$ =1.5, and that the amount of water in bottles is normally distributed.
+
+Test the manufacturer's claim at the 1% significance level (you may use Excel to calculate the ppp-value). Also, briefly comment on what the hypothesis test result means about the manufacturer's claim, and if an error might have occurred which type of error it would be.
+
+In summary, the assignment requires:
+
+1. The calculation of the sample mean from the raw observations
+2. The formulation of the hypotheses, H0 and H1
+3. Calculation of the test statistic value
+4. Calculation of the p-value
+5. A decision of whether or not to reject H0
+6. An inferential conclusion about what the test result means
+7. Indication of which type of error might have occurred.
+
+## 1. The calculation of the sample mean from the raw observations
+    
+
+```{r cars}
+sample_data = c(992, 1002, 1000, 1001, 998, 999, 1000, 995, 1003, 1001, 997, 997)
+sample_mean = mean(sample_data)
+sample_mean
+```
+
+## 2. The formulation of the hypotheses, H0 and H1
+
+H0: The sample mean is equal to 1000ml to the 1% significance level. It is assumed that the true variance of water in all bottles is $\sigma^2$ =1.5, and that the amount of water in bottles is normally distributed.
+
+H1: The sample mean is NOT equal to 1000ml to the 1% significance level.
+
+## 3. Calculation of the test statistic value
+
+The test statistics is the normalized mean of the sample, denoted by z
+
+```{r }
+mu = 1000
+sigma = sqrt(1.5)
+n = 12
+z = (sample_mean-mu)/(sigma/sqrt(n))
+z
+```
+
+## 4. Calculation of the p-value
+
+For a two-sided hypotesis testing of means equaltiy, the p-value is twice the normal distribution value of the test statistic
+
+
+```{r }
+p_value = 2*pnorm(z)
+p_value
+```
+
+## 5. A decision of whether or not to reject H0
+
+The p-value, `r p_value`, is  significant at the 1% significance level, thus, I  reject the null hypothesis of means equllity.
+
+## 6. An inferential conclusion about what the test result means
+
+There is enough evidence to reject the hypothesis that the mean of the sample is equal to 1000ml at the  1% significance level.
+
+## 7. Indication of which type of error might have occurred.
+
+There is a chance of a type II error, and that the sample mean is equal to 1000ml.
+
